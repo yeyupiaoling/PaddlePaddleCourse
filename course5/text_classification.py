@@ -1,0 +1,121 @@
+import paddle
+import paddle.dataset.imdb as imdb
+import paddle.fluid as fluid
+import numpy as np
+
+
+def rnn_net(ipt, input_dim):
+    emb = fluid.layers.embedding(input=ipt, size=[input_dim, 128], is_sparse=True)
+    sentence = fluid.layers.fc(input=emb, size=128, act='tanh')
+
+    rnn = fluid.layers.DynamicRNN()
+    with rnn.block():
+        word = rnn.step_input(sentence)
+        prev = rnn.memory(shape=[128])
+        hidden = fluid.layers.fc(input=[word, prev], size=128, act='relu')
+        rnn.update_memory(prev, hidden)
+        rnn.output(hidden)
+
+    last = fluid.layers.sequence_last_step(rnn())
+    out = fluid.layers.fc(input=last, size=2, act='softmax')
+    return out
+
+
+# 定义输入数据， lod_level不为0指定输入数据为序列数据
+words = fluid.layers.data(name='words', shape=[1], dtype='int64', lod_level=1)
+label = fluid.layers.data(name='label', shape=[1], dtype='int64')
+
+# 获取数据字典
+print("加载数据字典中...")
+word_dict = imdb.word_dict()
+# 获取数据字典长度
+dict_dim = len(word_dict)
+# 获取循环神经网络
+model = rnn_net(words, dict_dim)
+
+# 获取预测程序
+infer_program = fluid.default_main_program().clone(for_test=True)
+
+# 获取损失函数和准确率
+cost = fluid.layers.cross_entropy(input=model, label=label)
+avg_cost = fluid.layers.mean(cost)
+acc = fluid.layers.accuracy(input=model, label=label)
+
+# 获取预测程序
+test_program = fluid.default_main_program().clone(for_test=True)
+
+# 定义优化方法
+optimizer = fluid.optimizer.AdagradOptimizer(learning_rate=0.002)
+opt = optimizer.minimize(avg_cost)
+
+# 创建一个执行器，CPU训练速度比较慢
+place = fluid.CPUPlace()
+# place = fluid.CUDAPlace(0)
+exe = fluid.Executor(place)
+# 进行参数初始化
+exe.run(fluid.default_startup_program())
+
+# 获取训练和预测数据
+print("加载训练数据中...")
+train_reader = paddle.batch(
+    paddle.reader.shuffle(imdb.train(word_dict), 25000), batch_size=128)
+print("加载测试数据中...")
+test_reader = paddle.batch(imdb.test(word_dict), batch_size=128)
+
+# 定义输入数据的维度
+feeder = fluid.DataFeeder(place=place, feed_list=[words, label])
+
+# 开始训练
+for pass_id in range(1):
+    # 进行训练
+    train_cost = 0
+    for batch_id, data in enumerate(train_reader()):
+        train_cost, train_acc = exe.run(program=fluid.default_main_program(),
+                                        feed=feeder.feed(data),
+                                        fetch_list=[avg_cost, acc])
+        if batch_id % 100 == 0:
+            print('Pass:%d, Batch:%d, Cost:%0.5f, Accuracy:%0.5f' %
+                  (pass_id, batch_id, train_cost[0], train_acc[0]))
+
+    # 进行测试
+    test_costs = []
+    test_accs = []
+    for batch_id, data in enumerate(test_reader()):
+        test_cost, test_acc = exe.run(program=test_program,
+                                      feed=feeder.feed(data),
+                                      fetch_list=[avg_cost, acc])
+        test_costs.append(test_cost[0])
+        test_accs.append(test_acc[0])
+    # 计算平均预测损失在和准确率
+    test_cost = (sum(test_costs) / len(test_costs))
+    test_acc = (sum(test_accs) / len(test_accs))
+    print('Test:%d, Cost:%0.5f, Accuracy:%0.5f' %
+          (pass_id, test_cost, test_acc))
+
+# 定义预测数据
+reviews_str = ['read the book forget the movie', 'this is a great movie', 'this is very bad']
+
+# 把每个句子拆成一个个单词
+reviews = [c.split() for c in reviews_str]
+
+# 获取未知符号的标签
+UNK = word_dict['<unk>']
+# 获取每句话对应的标签
+lod = []
+for c in reviews:
+    # 需要把单词进行字符串编码转换
+    lod.append([np.int64(word_dict.get(words.encode('utf-8'), UNK)) for words in c])
+
+# 获取每句话的单词数量
+base_shape = [[len(c) for c in lod]]
+
+# 生成预测数据
+tensor_words = fluid.create_lod_tensor(lod, base_shape, place)
+
+# 预测获取预测结果,因为输入的是3个数据，所以要模拟3个label的输入
+results = exe.run(program=infer_program,
+                  feed={words.name: tensor_words},
+                  fetch_list=[model])
+# 打印每句话的正负面概率
+for i, r in enumerate(results[0]):
+    print("\'%s\'的预测结果为：正面概率为：%0.5f，负面概率为：%0.5f" % (reviews_str[i], r[0], r[1]))
