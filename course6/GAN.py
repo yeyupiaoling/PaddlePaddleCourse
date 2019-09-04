@@ -174,9 +174,9 @@ mnist_generator = paddle.batch(mnist_reader(paddle.dataset.mnist.train()), batch
 # 生成假图片的reader
 z_generator = paddle.batch(z_reader, batch_size=128)()
 
-# 创建执行器，最好使用GPU，CPU速度太慢了
-place = fluid.CPUPlace()
-# place = fluid.CUDAPlace(0)
+# 创建执行器
+# place = fluid.CPUPlace()
+place = fluid.CUDAPlace(0)
 exe = fluid.Executor(place)
 # 初始化参数
 exe.run(startup)
