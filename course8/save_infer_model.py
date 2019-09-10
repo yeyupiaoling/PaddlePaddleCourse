@@ -69,7 +69,7 @@ exe.run(fluid.default_startup_program())
 feeder = fluid.DataFeeder(place=place, feed_list=[image, label])
 
 # 开始训练和测试
-for pass_id in range(5):
+for pass_id in range(10):
     # 进行训练
     for batch_id, data in enumerate(train_reader()):
         train_cost, train_acc = exe.run(program=fluid.default_main_program(),

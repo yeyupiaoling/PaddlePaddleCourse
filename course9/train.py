@@ -7,7 +7,7 @@ from paddle.fluid.param_attr import ParamAttr
 
 
 # 定义残差神经网络（ResNet）
-def resnet50(input, class_dim):
+def resnet50(input):
     def conv_bn_layer(input, num_filters, filter_size, stride=1, groups=1, act=None, name=None):
         conv = fluid.layers.conv2d(input=input,
                                    num_filters=num_filters,
@@ -75,8 +75,7 @@ def resnet50(input, class_dim):
                                     name=conv_name)
 
     pool = fluid.layers.pool2d(input=conv, pool_size=7, pool_type='avg', global_pooling=True)
-    output = fluid.layers.fc(input=pool, size=class_dim, act='softmax')
-    return output
+    return pool
 
 
 # 定义输入层
@@ -84,23 +83,30 @@ image = fluid.layers.data(name='image', shape=[3, 224, 224], dtype='float32')
 label = fluid.layers.data(name='label', shape=[1], dtype='int64')
 
 # 获取分类器
-model = resnet50(image, 102)
+pool = resnet50(image)
+# 停止梯度下降
+pool.stop_gradient = True
+# 由这里创建一个基本的主程序
+base_model_program = fluid.default_main_program().clone()
+
+# 这里再重新加载网络的分类器，大小为本项目的分类大小
+model = fluid.layers.fc(input=pool, size=102, act='softmax')
 
 # 获取损失函数和准确率函数
 cost = fluid.layers.cross_entropy(input=model, label=label)
 avg_cost = fluid.layers.mean(cost)
 acc = fluid.layers.accuracy(input=model, label=label)
 
-# 获取训练和测试程序
+# 获取测试程序
 test_program = fluid.default_main_program().clone(for_test=True)
 
 # 定义优化方法
 optimizer = fluid.optimizer.AdamOptimizer(learning_rate=1e-3)
 opts = optimizer.minimize(avg_cost)
 
-# 获取花卉数据
-train_reader = paddle.batch(flowers.train(), batch_size=16)
-test_reader = paddle.batch(flowers.test(), batch_size=16)
+# 获取flowers数据
+train_reader = paddle.batch(flowers.train(), batch_size=32)
+test_reader = paddle.batch(flowers.test(), batch_size=32)
 
 # 定义一个使用GPU的执行器
 place = fluid.CUDAPlace(0)
@@ -109,11 +115,21 @@ exe = fluid.Executor(place)
 # 进行参数初始化
 exe.run(fluid.default_startup_program())
 
-# 经过处理的预训练预训练模型
-pretrained_model_path = 'models/pretrain_model/'
+# 官方提供的原预训练模型
+src_pretrain_model_path = 'models/ResNet50_pretrained/'
 
-# 加载经过处理的模型
-fluid.io.load_params(executor=exe, dirname=pretrained_model_path)
+
+# 通过这个函数判断模型文件是否存在
+def if_exist(var):
+    path = os.path.join(src_pretrain_model_path, var.name)
+    exist = os.path.exists(path)
+    if exist:
+        print('Load model: %s' % path)
+    return exist
+
+
+# 加载模型文件，只加载存在模型的模型文件
+fluid.io.load_vars(executor=exe, dirname=src_pretrain_model_path, predicate=if_exist, main_program=base_model_program)
 
 # 定义输入数据维度
 feeder = fluid.DataFeeder(place=place, feed_list=[image, label])
@@ -143,6 +159,15 @@ for pass_id in range(10):
     test_cost = (sum(test_costs) / len(test_costs))
     test_acc = (sum(test_accs) / len(test_accs))
     print('Test:%d, Cost:%0.5f, Accuracy:%0.5f' % (pass_id, test_cost, test_acc))
+
+    # 保存参数模型
+    save_pretrain_model_path = 'models/params/'
+    # 删除旧的模型文件
+    shutil.rmtree(save_pretrain_model_path, ignore_errors=True)
+    # 创建保持模型文件目录
+    os.makedirs(save_pretrain_model_path)
+    # 保存参数模型
+    fluid.io.save_params(executor=exe, dirname=save_pretrain_model_path)
 
     # 保存预测模型
     save_path = 'models/infer_model/'

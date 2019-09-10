@@ -1,6 +1,6 @@
-import paddle.fluid as fluid
-from PIL import Image
 import numpy as np
+import paddle.fluid as fluid
+from paddle.dataset.image import load_image, simple_transform
 
 # 创建执行器
 place = fluid.CPUPlace()
@@ -17,20 +17,17 @@ save_path = 'models/infer_model/'
 
 
 # 预处理图片
-def load_image(file):
-    im = Image.open(file)
-    im = im.resize((32, 32), Image.ANTIALIAS)
-    im = np.array(im).astype(np.float32)
-    # PIL打开图片存储顺序为H(高度)，W(宽度)，C(通道)。
-    # PaddlePaddle要求数据顺序为CHW，所以需要转换顺序。
-    im = im.transpose((2, 0, 1))
-    im = im / 255.0
-    im = np.expand_dims(im, axis=0)
-    return im
+def load_data(file):
+    img = load_image(file)
+    img = simple_transform(img, 256, 224, is_train=False,
+                           mean=[103.94, 116.78, 123.68])
+    img = img.astype('float32')
+    img = np.expand_dims(img, axis=0)
+    return img
 
 
 # 获取图片数据
-img = load_image('image/dog.png')
+img = load_data('image/image_00001.jpg')
 
 # 执行预测
 result = exe.run(program=infer_program,
@@ -40,8 +37,5 @@ result = exe.run(program=infer_program,
 # 显示图片并输出结果最大的label
 lab = np.argsort(result)[0][0][-1]
 
-names = ['飞机', '汽车', '鸟', '猫', '鹿',
-         '狗', '青蛙', '马', '船', '卡车']
-
-print('预测结果标签为：%d， 名称为：%s， 概率为：%f'
-      % (lab, names[lab], result[0][0][lab]))
+print('预测结果标签为：%d， 实际标签为：%d， 概率为：%f'
+      % (lab, 76, result[0][0][lab]))

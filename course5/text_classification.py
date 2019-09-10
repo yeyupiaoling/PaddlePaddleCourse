@@ -49,8 +49,8 @@ optimizer = fluid.optimizer.AdagradOptimizer(learning_rate=0.002)
 opt = optimizer.minimize(avg_cost)
 
 # 创建一个执行器，CPU训练速度比较慢
-# place = fluid.CPUPlace()
-place = fluid.CUDAPlace(0)
+place = fluid.CPUPlace()
+# place = fluid.CUDAPlace(0)
 exe = fluid.Executor(place)
 # 进行参数初始化
 exe.run(fluid.default_startup_program())
@@ -73,7 +73,7 @@ for pass_id in range(1):
         train_cost, train_acc = exe.run(program=fluid.default_main_program(),
                                         feed=feeder.feed(data),
                                         fetch_list=[avg_cost, acc])
-        if batch_id % 50 == 0:
+        if batch_id % 100 == 0:
             print('Pass:%d, Batch:%d, Cost:%0.5f, Accuracy:%0.5f' %
                   (pass_id, batch_id, train_cost[0], train_acc[0]))
 
