@@ -1,7 +1,7 @@
 import os
 import shutil
 
-import paddle as paddle
+import paddle
 import paddle.dataset.cifar as cifar
 import paddle.fluid as fluid
 

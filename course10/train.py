@@ -1,4 +1,6 @@
-import mobilenet_v2
+import os
+import shutil
+import vgg16
 import paddle as paddle
 import paddle.dataset.cifar as cifar
 import paddle.fluid as fluid
@@ -22,7 +24,8 @@ image = fluid.layers.data(name='image', shape=[3, 32, 32], dtype='float32')
 label = fluid.layers.data(name='label', shape=[1], dtype='int64')
 
 # 获取分类器
-model = mobilenet_v2.net(image, 10)
+# model = mobilenet_v2.net(image, 10)
+model = vgg16.vgg16(image, 10)
 
 # 获取损失函数和准确率函数
 cost = fluid.layers.cross_entropy(input=model, label=label)
@@ -33,7 +36,9 @@ acc = fluid.layers.accuracy(input=model, label=label)
 test_program = fluid.default_main_program().clone(for_test=True)
 
 # 定义优化方法
-optimizer = fluid.optimizer.AdamOptimizer(learning_rate=1e-3)
+optimizer = fluid.optimizer.MomentumOptimizer(learning_rate=1e-3,
+                                              momentum=0.9,
+                                              regularization=fluid.regularizer.L2DecayRegularizer(2e-3))
 opts = optimizer.minimize(avg_cost)
 
 # 获取CIFAR数据
@@ -55,8 +60,8 @@ train_step = 0
 test_step = 0
 params_name = fluid.default_startup_program().global_block().all_parameters()[0].name
 
-# 训练10次
-for pass_id in range(10):
+# 训练20次
+for pass_id in range(20):
     # 进行训练
     for batch_id, data in enumerate(train_reader()):
         train_cost, train_acc, params = exe.run(program=fluid.default_main_program(),
@@ -91,3 +96,12 @@ for pass_id in range(10):
     test_cost = (sum(test_costs) / len(test_costs))
     test_acc = (sum(test_accs) / len(test_accs))
     print('Test:%d, Cost:%0.5f, Accuracy:%0.5f' % (pass_id, test_cost, test_acc))
+
+    # 保存预测模型
+    save_path = 'models/'
+    # 删除旧的模型文件
+    shutil.rmtree(save_path, ignore_errors=True)
+    # 创建保持模型文件目录
+    os.makedirs(save_path)
+    # 保存预测模型
+    fluid.io.save_inference_model(save_path, feeded_var_names=[image.name], target_vars=[model], executor=exe)
