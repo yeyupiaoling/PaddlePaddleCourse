@@ -60,8 +60,8 @@ train_step = 0
 test_step = 0
 params_name = fluid.default_startup_program().global_block().all_parameters()[0].name
 
-# 训练20次
-for pass_id in range(20):
+# 训练10次
+for pass_id in range(10):
     # 进行训练
     for batch_id, data in enumerate(train_reader()):
         train_cost, train_acc, params = exe.run(program=fluid.default_main_program(),
