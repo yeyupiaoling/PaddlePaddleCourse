@@ -24,7 +24,6 @@ image = fluid.layers.data(name='image', shape=[3, 32, 32], dtype='float32')
 label = fluid.layers.data(name='label', shape=[1], dtype='int64')
 
 # 获取分类器
-# model = mobilenet_v2.net(image, 10)
 model = vgg16.vgg16(image, 10)
 
 # 获取损失函数和准确率函数
