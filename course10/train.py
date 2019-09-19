@@ -35,9 +35,10 @@ acc = fluid.layers.accuracy(input=model, label=label)
 test_program = fluid.default_main_program().clone(for_test=True)
 
 # 定义优化方法
+l2 = fluid.regularizer.L2DecayRegularizer(2e-3)
 optimizer = fluid.optimizer.MomentumOptimizer(learning_rate=1e-3,
                                               momentum=0.9,
-                                              regularization=fluid.regularizer.L2DecayRegularizer(2e-3))
+                                              regularization=l2)
 opts = optimizer.minimize(avg_cost)
 
 # 获取CIFAR数据
