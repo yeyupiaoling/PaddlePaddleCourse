@@ -24,7 +24,6 @@ image = fluid.layers.data(name='image', shape=[3, 32, 32], dtype='float32')
 label = fluid.layers.data(name='label', shape=[1], dtype='int64')
 
 # 获取分类器
-# model = mobilenet_v2.net(image, 10)
 model = vgg16.vgg16(image, 10)
 
 # 获取损失函数和准确率函数
@@ -36,9 +35,10 @@ acc = fluid.layers.accuracy(input=model, label=label)
 test_program = fluid.default_main_program().clone(for_test=True)
 
 # 定义优化方法
+l2 = fluid.regularizer.L2DecayRegularizer(2e-3)
 optimizer = fluid.optimizer.MomentumOptimizer(learning_rate=1e-3,
                                               momentum=0.9,
-                                              regularization=fluid.regularizer.L2DecayRegularizer(2e-3))
+                                              regularization=l2)
 opts = optimizer.minimize(avg_cost)
 
 # 获取CIFAR数据

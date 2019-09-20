@@ -82,7 +82,7 @@ def resnet50(input):
 image = fluid.layers.data(name='image', shape=[3, 224, 224], dtype='float32')
 label = fluid.layers.data(name='label', shape=[1], dtype='int64')
 
-# 获取分类器
+# 获取网络模型
 pool = resnet50(image)
 # 停止梯度下降
 pool.stop_gradient = True
@@ -129,7 +129,8 @@ def if_exist(var):
 
 
 # 加载模型文件，只加载存在模型的模型文件
-fluid.io.load_vars(executor=exe, dirname=src_pretrain_model_path, predicate=if_exist, main_program=base_model_program)
+fluid.io.load_vars(executor=exe, dirname=src_pretrain_model_path,
+                   predicate=if_exist, main_program=base_model_program)
 
 # 定义输入数据维度
 feeder = fluid.DataFeeder(place=place, feed_list=[image, label])
@@ -176,4 +177,5 @@ for pass_id in range(10):
     # 创建保持模型文件目录
     os.makedirs(save_path)
     # 保存预测模型
-    fluid.io.save_inference_model(save_path, feeded_var_names=[image.name], target_vars=[model], executor=exe)
+    fluid.io.save_inference_model(save_path, feeded_var_names=[image.name],
+                                  target_vars=[model], executor=exe)
