@@ -31,7 +31,7 @@ cost = fluid.layers.cross_entropy(input=model, label=label)
 avg_cost = fluid.layers.mean(cost)
 acc = fluid.layers.accuracy(input=model, label=label)
 
-# 获取训练和测试程序
+# 克隆测试程序
 test_program = fluid.default_main_program().clone(for_test=True)
 
 # 定义优化方法
@@ -45,7 +45,7 @@ opts = optimizer.minimize(avg_cost)
 train_reader = paddle.batch(cifar.train10(), batch_size=32)
 test_reader = paddle.batch(cifar.test10(), batch_size=32)
 
-# 定义一个使用CPU的执行器
+# 定义一个使用GPU的执行器
 place = fluid.CUDAPlace(0)
 # place = fluid.CPUPlace()
 exe = fluid.Executor(place)
@@ -90,12 +90,9 @@ for pass_id in range(10):
         test_cost_writer.add_record(test_step, test_cost[0])
         test_acc_writer.add_record(test_step, test_acc[0])
 
-        test_accs.append(test_acc[0])
-        test_costs.append(test_cost[0])
-    # 求测试结果的平均值
-    test_cost = (sum(test_costs) / len(test_costs))
-    test_acc = (sum(test_accs) / len(test_accs))
-    print('Test:%d, Cost:%0.5f, Accuracy:%0.5f' % (pass_id, test_cost, test_acc))
+        print('Test:%d, Batch:%d, Cost:%0.5f, Accuracy:%0.5f' % (
+            pass_id, batch_id, test_cost, test_acc))
+
 
     # 保存预测模型
     save_path = 'models/'
@@ -104,4 +101,7 @@ for pass_id in range(10):
     # 创建保持模型文件目录
     os.makedirs(save_path)
     # 保存预测模型
-    fluid.io.save_inference_model(save_path, feeded_var_names=[image.name], target_vars=[model], executor=exe)
+    fluid.io.save_inference_model(dirname=save_path,
+                                  feeded_var_names=[image.name],
+                                  target_vars=[model],
+                                  executor=exe)
