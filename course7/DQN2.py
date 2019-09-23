@@ -97,7 +97,7 @@ initial_epsilon = 1.0
 final_epsilon = 0.01
 update_num = 0
 epsilon_num = 0
-num_episodes = 300
+num_episodes = 3000
 epsilon = initial_epsilon
 # 开始玩游戏
 for epsilon_id in range(num_episodes):
@@ -109,7 +109,7 @@ for epsilon_id in range(num_episodes):
     ep_reward = 0
     while not done:
         # 显示游戏界面
-        env.render()
+        # env.render()
         state = np.expand_dims(state, axis=0)
         # epsilon-greedy 探索策略
         if random.random() < epsilon:
@@ -129,9 +129,6 @@ for epsilon_id in range(num_episodes):
 
         # 累计每次奖励或者惩罚
         ep_reward += reward
-        # 记录游戏输出的结果，作为之后训练的数据
-        replay_buffer.append((state, action, reward, next_state, done))
-
         # 如果游戏结束，输出结束原因
         if done:
             position = next_state[0]
@@ -139,12 +136,13 @@ for epsilon_id in range(num_episodes):
             # print('Pass:%d, epsilon:%f, reward:%d, action:%s' % (epsilon_id, epsilon, ep_reward, next_state))
             if 0.5 <= position <= 0.6 and -0.07 <= velocity <= 0.07:
                 print('Pass:%d, 挑战成功, 得分：%d, 奖励:%d, state:%s' % (epsilon_id, ep_reward, reward, next_state))
+                ep_reward += 10
             if ep_reward == -200:
                 print('Pass:%d, 挑战失败, 原因：操作次数超过200次' % epsilon_id)
-            if -1.2 > position > 0.6:
-                print('Pass:%d, 挑战失败, 原因：位置超出[-1.2, 0.6]限制' % epsilon_id)
-            if -0.07 > velocity > 0.07:
-                print('Pass:%d, 挑战失败, 原因：速度超出[-0.07, 0.07]限制' % epsilon_id)
+
+
+        # 记录游戏输出的结果，作为之后训练的数据
+        replay_buffer.append((state, action, ep_reward, next_state, done))
 
         # 如果收集的数据大于Batch的大小，就开始训练
         if len(replay_buffer) >= batch_size:
