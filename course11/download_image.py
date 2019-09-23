@@ -15,20 +15,17 @@ def download_image(key_word, save_name, download_max):
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     while download_sum < download_max:
-        # 下载次数超过指定值就停止下载
-        if download_sum >= download_max:
-            break
+        download_sum += 1
         str_pn = str(download_sum)
         # 定义百度图片的路径
         url = 'http://image.baidu.com/search/flip?tn=baiduimage&ie=utf-8&' \
               'word=' + key_word + '&pn=' + str_pn + '&gsm=80&ct=&ic=0&lm=-1&width=0&height=0'
-        print('正在下载 %s 的第 %d 张图片.....' % (key_word, download_sum))
         try:
             # 获取当前页面的源码
             result = requests.get(url, timeout=30).text
             # 获取当前页面的图片URL
             img_urls = re.findall('"objURL":"(.*?)",', result, re.S)
-            if len(img_urls) < 1:
+            if img_urls is None or len(img_urls) < 1:
                 break
             # 开始下载图片
             for img_url in img_urls:
@@ -37,12 +34,12 @@ def download_image(key_word, save_name, download_max):
                 # 保存图片
                 with open(save_path + '/' + str(uuid.uuid1()) + '.jpg', 'wb') as f:
                     f.write(img.content)
+                print('正在下载 %s 的第 %d 张图片' % (key_word, download_sum))
                 download_sum += 1
+                # 下载次数超过指定值就停止下载
                 if download_sum >= download_max:
                     break
-        except Exception as e:
-            print('【错误】当前图片无法下载，%s' % e)
-            download_sum += 1
+        except:
             continue
     print('下载完成')
 
@@ -80,7 +77,7 @@ if __name__ == '__main__':
     key_words = {'西瓜': 'watermelon', '哈密瓜': 'cantaloupe',
                  '樱桃': 'cherry', '苹果': 'apple', '黄瓜': 'cucumber', '胡萝卜': 'carrot'}
     # 每个类别下载一千个
-    max_sum = 50
+    max_sum = 300
     for key_word in key_words:
         save_name = key_words[key_word]
         download_image(key_word, save_name, max_sum)
