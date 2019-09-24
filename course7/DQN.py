@@ -74,7 +74,7 @@ state_model = DQNetWork(state_data, 'policy')
 # 克隆预测程序
 predict_program = fluid.default_main_program().clone()
 
-# 定义损失函数
+
 action_onehot = fluid.layers.one_hot(action_data, 2)
 action_value = fluid.layers.elementwise_mul(action_onehot, state_model)
 pred_action_value = fluid.layers.reduce_sum(action_value, dim=1)
@@ -84,6 +84,7 @@ best_v = fluid.layers.reduce_max(targetQ_predict_value, dim=1)
 best_v.stop_gradient = True
 target = reward_data + gamma * best_v * (1.0 - done_data)
 
+# 定义损失函数
 cost = fluid.layers.square_error_cost(pred_action_value, target)
 avg_cost = fluid.layers.reduce_mean(cost)
 
@@ -158,3 +159,4 @@ for epsilon_id in range(num_episodes):
                           'reward': batch_reward,
                           'next_state': batch_next_state,
                           'done': batch_done})
+env.close()
