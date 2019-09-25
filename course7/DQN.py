@@ -25,28 +25,6 @@ def DQNetWork(ipt, variable_field):
     return out
 
 
-# 定义更新参数程序
-def _build_sync_target_network():
-    # 获取所有的参数
-    vars = list(fluid.default_main_program().list_vars())
-    # 把两个网络的参数分别过滤出来
-    policy_vars = list(filter(lambda x: 'GRAD' not in x.name and 'policy' in x.name, vars))
-    target_vars = list(filter(lambda x: 'GRAD' not in x.name and 'target' in x.name, vars))
-    policy_vars.sort(key=lambda x: x.name)
-    target_vars.sort(key=lambda x: x.name)
-
-    # 从主程序中克隆一个程序用于更新参数
-    sync_program = fluid.default_main_program().clone()
-    with fluid.program_guard(sync_program):
-        sync_ops = []
-        for i, var in enumerate(policy_vars):
-            sync_op = fluid.layers.assign(policy_vars[i], target_vars[i])
-            sync_ops.append(sync_op)
-    # 修剪第二个玩了个的参数，完成更新参数
-    sync_program = sync_program._prune(sync_ops)
-    return sync_program
-
-
 # 定义输入数据
 state_data = fluid.layers.data(name='state', shape=[4], dtype='float32')
 action_data = fluid.layers.data(name='action', shape=[1], dtype='int64')
@@ -74,7 +52,6 @@ state_model = DQNetWork(state_data, 'policy')
 # 克隆预测程序
 predict_program = fluid.default_main_program().clone()
 
-
 action_onehot = fluid.layers.one_hot(action_data, 2)
 action_value = fluid.layers.elementwise_mul(action_onehot, state_model)
 pred_action_value = fluid.layers.reduce_sum(action_value, dim=1)
@@ -87,6 +64,29 @@ target = reward_data + gamma * best_v * (1.0 - done_data)
 # 定义损失函数
 cost = fluid.layers.square_error_cost(pred_action_value, target)
 avg_cost = fluid.layers.reduce_mean(cost)
+
+
+# 定义更新参数程序
+def _build_sync_target_network():
+    # 获取所有的参数
+    vars = list(fluid.default_main_program().list_vars())
+    # 把两个网络的参数分别过滤出来
+    policy_vars = list(filter(lambda x: 'GRAD' not in x.name and 'policy' in x.name, vars))
+    target_vars = list(filter(lambda x: 'GRAD' not in x.name and 'target' in x.name, vars))
+    policy_vars.sort(key=lambda x: x.name)
+    target_vars.sort(key=lambda x: x.name)
+
+    # 从主程序中克隆一个程序用于更新参数
+    sync_program = fluid.default_main_program().clone()
+    with fluid.program_guard(sync_program):
+        sync_ops = []
+        for i, var in enumerate(policy_vars):
+            sync_op = fluid.layers.assign(policy_vars[i], target_vars[i])
+            sync_ops.append(sync_op)
+    # 修剪第二个玩了个的参数，完成更新参数
+    sync_program = sync_program._prune(sync_ops)
+    return sync_program
+
 
 # 获取更新参数程序
 _sync_program = _build_sync_target_network()
