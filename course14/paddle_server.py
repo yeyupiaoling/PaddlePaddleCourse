@@ -1,10 +1,15 @@
 import os
-import uuid
+import cv2
 import numpy as np
-import paddle.fluid as fluid
+import uuid
 from PIL import Image
-from flask import Flask, request
+from flask import Flask, request, render_template
 from flask_cors import CORS
+from paddle.fluid.core import AnalysisConfig
+from paddle.fluid.core import PaddleBuf
+from paddle.fluid.core import PaddleDType
+from paddle.fluid.core import PaddleTensor
+from paddle.fluid.core import create_paddle_predictor
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -13,7 +18,7 @@ CORS(app)
 
 
 # 根路径，返回一个字符串
-@app.route('/')
+@app.route('/hello')
 def hello_world():
     return 'Welcome to PaddlePaddle'
 
@@ -24,16 +29,16 @@ def upload_file():
     f = request.files['img']
     # 设置保存路径
     save_father_path = 'images'
-    img_path = os.path.join(save_father_path, str(uuid.uuid1()) + secure_filename(f.filename).split('.')[-1])
+    img_path = os.path.join(save_father_path, str(uuid.uuid1()) +
+                            secure_filename(f.filename).split('.')[-1])
     if not os.path.exists(save_father_path):
         os.makedirs(save_father_path)
     f.save(img_path)
     return 'success, save path: ' + img_path
 
 
-# 预处理图片
-def load_image(file):
-    img = Image.open(file)
+def load_image(img):
+    img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     # 统一图像大小
     img = img.resize((224, 224), Image.ANTIALIAS)
     # 转换成numpy值
@@ -46,47 +51,49 @@ def load_image(file):
     return img
 
 
-# 创建执行器
-place = fluid.CPUPlace()
-exe = fluid.Executor(place)
-exe.run(fluid.default_startup_program())
+def fake_input(img):
+    image = PaddleTensor()
+    image.name = "image"
+    image.shape = img.shape
+    image.dtype = PaddleDType.FLOAT32
+    image.data = PaddleBuf(img.flatten().tolist())
+    return [image]
 
-# 保存预测模型路径
-save_path = 'models/'
-# 从模型中获取预测程序、输入数据名称列表、分类器
-[infer_program,
- feeded_var_names,
- target_var] = fluid.io.load_inference_model(dirname=save_path, executor=exe)
+
+# 配置预测器信息，指定模型路径
+config = AnalysisConfig('models')
+# 设置使用GPU
+config.disable_gpu()
+# 创建预测器
+predictor = create_paddle_predictor(config)
 
 
 @app.route('/infer', methods=['POST'])
 def infer():
     f = request.files['img']
-
-    # 保存图片
-    save_father_path = 'images'
-    img_path = os.path.join(save_father_path, str(uuid.uuid1()) + '.' + secure_filename(f.filename).split('.')[-1])
-    if not os.path.exists(save_father_path):
-        os.makedirs(save_father_path)
-    f.save(img_path)
-
-    # 开始预测图片
-    img = load_image(img_path)
-    result = exe.run(program=infer_program,
-                     feed={feeded_var_names[0]: img},
-                     fetch_list=target_var)
-
+    img = cv2.imdecode(np.fromstring(f.read(), np.uint8), cv2.IMREAD_UNCHANGED)
+    # 获取图像数据
+    inputs = fake_input(load_image(img))
+    # 执行预测
+    outputs = predictor.run(inputs)
+    # 获取第一个预测结果
+    output = outputs[0]
+    # 获取预测概率值
+    result = output.data.float_data()
     # 显示图片并输出结果最大的label
-    lab = np.argsort(result)[0][0][-1]
-
+    lab = np.argsort(result)[-1]
     names = ['苹果', '哈密瓜', '胡萝卜', '樱桃', '黄瓜', '西瓜']
-
     # 打印和返回预测结果
-    r = '{"label":%d, "name":"%s", "possibility":%f}' % (lab, names[lab], result[0][0][lab])
+    r = '{"label":%d, "name":"%s", "possibility":%f}' % (lab, names[lab], result[lab])
     print(r)
     return r
 
 
-if __name__ == '__main__':
+@app.route('/', methods=["GET"])
+def index():
+    return render_template('index.html')
+
+
+if __name__ == "__main__":
     # 启动服务，并指定端口号
-    app.run(port=80)
+    app.run(host='127.0.0.1', port=80)
