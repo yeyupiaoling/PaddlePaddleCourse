@@ -1,71 +1,88 @@
+import os
+
 import numpy as np
 import paddle
 import paddle.fluid as fluid
 from cnn import CNN
 
 
+# 测函数
 def test_train(reader, model, batch_size):
     acc_set = []
     avg_loss_set = []
     for batch_id, data in enumerate(reader()):
+        # 把数据集拆分为data和label
         dy_x_data = np.array([x[0].reshape(1, 28, 28) for x in data]).astype('float32')
         y_data = np.array([x[1] for x in data]).astype('int64').reshape(batch_size, 1)
-
+        # 把训练数据转换为动态图所需的Variable类型
         img = fluid.dygraph.base.to_variable(dy_x_data)
         label = fluid.dygraph.base.to_variable(y_data)
         label.stop_gradient = True
-        prediction, acc = model(img, label)
-        loss = fluid.layers.cross_entropy(input=prediction, label=label)
-        avg_loss = fluid.layers.mean(loss)
-        acc_set.append(float(acc.numpy()))
-        avg_loss_set.append(float(avg_loss.numpy()))
-
-        # get test acc and loss
+        # 获取网络输出
+        test_predict = model(img)
+        # 获取准确率函数和损失函数
+        test_accuracy = fluid.layers.accuracy(input=test_predict, label=label)
+        test_loss = fluid.layers.cross_entropy(input=test_predict, label=label)
+        test_avg_loss = fluid.layers.mean(test_loss)
+        # 保存每次的计算结果
+        acc_set.append(float(test_accuracy.numpy()))
+        avg_loss_set.append(float(test_avg_loss.numpy()))
+    # 求准确率和损失值的平均值
     acc_val_mean = np.array(acc_set).mean()
     avg_loss_val_mean = np.array(avg_loss_set).mean()
 
     return avg_loss_val_mean, acc_val_mean
 
 
-def train_mnist():
-    epoch_num = 1
-    BATCH_SIZE = 64
-    with fluid.dygraph.guard(place=fluid.CPUPlace()):
+BATCH_SIZE = 64
+# 使用动态图with块，指定使用GPU或者CPU训练
+with fluid.dygraph.guard(place=fluid.CPUPlace()):
+    # 获取网络模型，并指定网络名称
+    cnn = CNN("mnist")
+    # 如果之前已经保存模型，可以在这里加载模型
+    if os.path.exists('models'):
+        param_dict, _ = fluid.dygraph.load_persistables("models")
+        # 加载模型中的参数
+        cnn.load_dict(param_dict)
+    # 获取优化方法
+    momentum = fluid.optimizer.MomentumOptimizer(learning_rate=1e-3, momentum=0.9)
 
-        cnn = CNN("mnist")
-        model, _ = fluid.dygraph.load_persistables("models")
-        cnn.load_dict(model)
-        adam = fluid.optimizer.AdamOptimizer(learning_rate=0.001)
-        train_reader = paddle.batch(paddle.dataset.mnist.train(), batch_size=BATCH_SIZE, drop_last=True)
-        test_reader = paddle.batch(paddle.dataset.mnist.test(), batch_size=BATCH_SIZE, drop_last=True)
+    # 获取训练和测试数据
+    train_reader = paddle.batch(paddle.dataset.mnist.train(), batch_size=BATCH_SIZE, drop_last=True)
+    test_reader = paddle.batch(paddle.dataset.mnist.test(), batch_size=BATCH_SIZE, drop_last=True)
 
-        for epoch in range(epoch_num):
-            for batch_id, data in enumerate(train_reader()):
-                dy_x_data = np.array([x[0].reshape(1, 28, 28) for x in data]).astype('float32')
-                y_data = np.array([x[1] for x in data]).astype('int64').reshape(BATCH_SIZE, 1)
+    # 开始训练
+    for epoch in range(2):
+        for batch_id, data in enumerate(train_reader()):
+            # 把数据集拆分为data和label
+            dy_x_data = np.array([x[0].reshape(1, 28, 28) for x in data]).astype('float32')
+            y_data = np.array([x[1] for x in data]).astype('int64').reshape(BATCH_SIZE, 1)
+            # 把训练数据转换为动态图所需的Variable类型
+            img = fluid.dygraph.base.to_variable(dy_x_data)
+            label = fluid.dygraph.base.to_variable(y_data)
+            # 不需要训练label
+            label.stop_gradient = True
+            # 获取网络输出
+            predict = cnn(img)
+            # 获取准确率函数和损失函数
+            accuracy = fluid.layers.accuracy(input=predict, label=label)
+            loss = fluid.layers.cross_entropy(predict, label)
+            avg_loss = fluid.layers.mean(loss)
+            # 计算梯度
+            avg_loss.backward()
+            momentum.minimize(avg_loss)
+            # 将参数梯度清零以保证下一轮训练的正确性
+            cnn.clear_gradients()
+            # 打印一次信息
+            if batch_id % 100 == 0:
+                print(
+                    "Epoch:%d, Batch:%d, Loss:%f, Accuracy:%f" % (epoch, batch_id, avg_loss.numpy(), accuracy.numpy()))
+        # 开始执行测试
+        cnn.eval()
+        test_cost, test_acc = test_train(test_reader, cnn, BATCH_SIZE)
+        # 准备重新恢复训练
+        cnn.train()
+        print("Test:%d, Loss:%f, Accuracy:%f" % (epoch, test_cost, test_acc))
 
-                img = fluid.dygraph.base.to_variable(dy_x_data)
-                label = fluid.dygraph.base.to_variable(y_data)
-                label.stop_gradient = True
-
-                cost, acc = cnn(img, label)
-
-                loss = fluid.layers.cross_entropy(cost, label)
-                avg_loss = fluid.layers.mean(loss)
-                avg_loss.backward()
-                adam.minimize(avg_loss)
-                # save checkpoint
-                cnn.clear_gradients()
-                if batch_id % 100 == 0:
-                    print("Loss at epoch {} step {}: {:}".format(epoch, batch_id, avg_loss.numpy()))
-
-            cnn.eval()
-            test_cost, test_acc = test_train(test_reader, cnn, BATCH_SIZE)
-            cnn.train()
-            print("Loss at epoch {} , Test avg_loss is: {}, acc is: {}".format(epoch, test_cost, test_acc))
-
-        fluid.dygraph.save_persistables(cnn.state_dict(), "models")
-        print("checkpoint saved")
-
-
-train_mnist()
+        # 保存模型
+        fluid.dygraph.save_persistables(model_dict=cnn.state_dict(), dirname="models")
