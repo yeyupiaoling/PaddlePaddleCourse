@@ -3,10 +3,6 @@ import os
 
 
 def create_data_list(data_root_path):
-    with open(data_root_path + "test.list", 'w') as f:
-        pass
-    with open(data_root_path + "train.list", 'w') as f:
-        pass
     # 所有类别的信息
     class_detail = []
     # 获取所有类别
@@ -26,9 +22,6 @@ def create_data_list(data_root_path):
     other_file = 0
     # 读取每个类别
     for class_dir in class_dirs:
-        if class_dir == 'test.list' or class_dir == "train.list" or class_dir == 'readme.json':
-            other_file += 1
-            continue
         print('正在读取类别：%s' % class_dir)
         # 每个类别的信息
         class_detail_list = {}
@@ -43,9 +36,6 @@ def create_data_list(data_root_path):
         for img_path in img_paths:
             # 每张图片的路径
             name_path = class_dir + '/' + img_path
-            # 如果不存在这个文件夹,就创建
-            if not os.path.exists(data_root_path):
-                os.makedirs(data_root_path)
             # 每10张图片取一个做测试数据
             if class_sum % 10 == 0:
                 test_sum += 1
