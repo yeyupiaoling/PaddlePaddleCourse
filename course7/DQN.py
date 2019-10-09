@@ -32,33 +32,26 @@ reward_data = fluid.layers.data(name='reward', shape=[], dtype='float32')
 next_state_data = fluid.layers.data(name='next_state', shape=[4], dtype='float32')
 done_data = fluid.layers.data(name='done', shape=[], dtype='float32')
 
-# 定义训练的参数
-batch_size = 32
-num_episodes = 300
-num_exploration_episodes = 100
-max_len_episode = 1000
-learning_rate = 1e-3
-gamma = 1.0
-initial_epsilon = 1.0
-final_epsilon = 0.01
-
 # 实例化一个游戏环境，参数为游戏名称
 env = gym.make("CartPole-v1")
 replay_buffer = deque(maxlen=10000)
 
-# 获取网络
-state_model = DQNetWork(state_data, 'policy')
+# 获取策略网络
+policyQ = DQNetWork(state_data, 'policy')
 
 # 克隆预测程序
 predict_program = fluid.default_main_program().clone()
 
 action_onehot = fluid.layers.one_hot(action_data, 2)
-action_value = fluid.layers.elementwise_mul(action_onehot, state_model)
+action_value = fluid.layers.elementwise_mul(action_onehot, policyQ)
 pred_action_value = fluid.layers.reduce_sum(action_value, dim=1)
 
-targetQ_predict_value = DQNetWork(next_state_data, 'target')
-best_v = fluid.layers.reduce_max(targetQ_predict_value, dim=1)
+# 获取目标网络
+targetQ = DQNetWork(next_state_data, 'target')
+best_v = fluid.layers.reduce_max(targetQ, dim=1)
+# 停止梯度更新
 best_v.stop_gradient = True
+gamma = 1.0
 target = reward_data + gamma * best_v * (1.0 - done_data)
 
 # 定义损失函数
@@ -83,7 +76,7 @@ def _build_sync_target_network():
         for i, var in enumerate(policy_vars):
             sync_op = fluid.layers.assign(policy_vars[i], target_vars[i])
             sync_ops.append(sync_op)
-    # 修剪第二个玩了个的参数，完成更新参数
+    # 完成更新参数
     sync_program = sync_program._prune(sync_ops)
     return sync_program
 
@@ -92,27 +85,37 @@ def _build_sync_target_network():
 _sync_program = _build_sync_target_network()
 
 # 定义优化方法
-optimizer = fluid.optimizer.AdamOptimizer(learning_rate=learning_rate, epsilon=1e-3)
+optimizer = fluid.optimizer.AdamOptimizer(learning_rate=1e-3,
+                                          epsilon=1e-3)
 opt = optimizer.minimize(avg_cost)
 
 # 创建执行器并进行初始化
 place = fluid.CPUPlace()
 exe = fluid.Executor(place)
 exe.run(fluid.default_startup_program())
-epsilon = initial_epsilon
 
+# 定义训练的参数
+batch_size = 32
+num_episodes = 300
+num_exploration_episodes = 100
+max_len_episode = 1000
+initial_epsilon = 1.0
+final_epsilon = 0.01
+epsilon = initial_epsilon
 update_num = 0
+
 # 开始玩游戏
 for epsilon_id in range(num_episodes):
     # 初始化环境，获得初始状态
     state = env.reset()
+    # 定义贪心策略
     epsilon = max(initial_epsilon * (num_exploration_episodes - epsilon_id) /
                   num_exploration_episodes, final_epsilon)
     for t in range(max_len_episode):
         # 显示游戏界面
         env.render()
         state = np.expand_dims(state, axis=0)
-        # epsilon-greedy 探索策略
+        # 贪心探索策略
         if random.random() < epsilon:
             # 以 epsilon 的概率选择随机下一步动作
             action = env.action_space.sample()
@@ -120,7 +123,7 @@ for epsilon_id in range(num_episodes):
             # 使用模型预测作为结果下一步动作
             action = exe.run(predict_program,
                              feed={'state': state.astype('float32')},
-                             fetch_list=[state_model])[0]
+                             fetch_list=[policyQ])[0]
             action = np.squeeze(action, axis=0)
             action = np.argmax(action)
 
@@ -140,13 +143,9 @@ for epsilon_id in range(num_episodes):
 
         # 如果收集的数据大于Batch的大小，就开始训练
         if len(replay_buffer) >= batch_size:
-            batch_state, batch_action, batch_reward, batch_next_state, batch_done = \
-                [np.array(a, np.float32) for a in zip(*random.sample(replay_buffer, batch_size))]
-
-            # 更新参数
-            if update_num % 200 == 0:
-                exe.run(program=_sync_program)
-            update_num += 1
+            batch_state, batch_action, batch_reward, batch_next_state, \
+            batch_done = [np.array(a, np.float32) for a in
+                          zip(*random.sample(replay_buffer, batch_size))]
 
             # 调整数据维度
             batch_action = np.expand_dims(batch_action, axis=-1)
@@ -159,4 +158,9 @@ for epsilon_id in range(num_episodes):
                           'reward': batch_reward,
                           'next_state': batch_next_state,
                           'done': batch_done})
+
+            # 更新参数
+            if update_num % 200 == 0:
+                exe.run(program=_sync_program)
+            update_num += 1
 env.close()

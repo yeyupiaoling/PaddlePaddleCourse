@@ -3,8 +3,8 @@ import numpy as np
 import paddle
 
 
-# 训练数据的预处理
-def train_mapper(sample):
+# 数据的预处理
+def mapper(sample):
     data, label = sample
     data = [int(data) for data in data.split(',')]
     return data, int(label)
@@ -12,7 +12,6 @@ def train_mapper(sample):
 
 # 训练数据的reader
 def train_reader(train_list_path):
-
     def reader():
         with open(train_list_path, 'r') as f:
             lines = f.readlines()
@@ -23,19 +22,11 @@ def train_reader(train_list_path):
                 data, label = line.split('\t')
                 yield data, label
 
-    return paddle.reader.xmap_readers(train_mapper, reader, cpu_count(), 1024)
-
-
-# 测试数据的预处理
-def test_mapper(sample):
-    data, label = sample
-    data = [int(data) for data in data.split(',')]
-    return data, int(label)
+    return paddle.reader.xmap_readers(mapper, reader, cpu_count(), 1024)
 
 
 # 测试数据的reader
 def test_reader(test_list_path):
-
     def reader():
         with open(test_list_path, 'r') as f:
             lines = f.readlines()
@@ -43,4 +34,4 @@ def test_reader(test_list_path):
                 data, label = line.split('\t')
                 yield data, label
 
-    return paddle.reader.xmap_readers(test_mapper, reader, cpu_count(), 1024)
+    return paddle.reader.xmap_readers(mapper, reader, cpu_count(), 1024)

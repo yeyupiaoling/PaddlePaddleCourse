@@ -75,8 +75,9 @@ def delete_error_image(father_path):
 if __name__ == '__main__':
     # 定义要下载的图片中文名称和英文名称，ps：英文名称主要是为了设置文件夹名
     key_words = {'西瓜': 'watermelon', '哈密瓜': 'cantaloupe',
-                 '樱桃': 'cherry', '苹果': 'apple', '黄瓜': 'cucumber', '胡萝卜': 'carrot'}
-    # 每个类别下载一千个
+                 '樱桃': 'cherry', '苹果': 'apple',
+                 '黄瓜': 'cucumber', '胡萝卜': 'carrot'}
+    # 下载图像
     max_sum = 300
     for key_word in key_words:
         save_name = key_words[key_word]

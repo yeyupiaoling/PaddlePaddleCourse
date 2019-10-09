@@ -9,7 +9,10 @@ exe.run(fluid.default_startup_program())
 # 保存预测模型路径
 save_path = 'infer_model/'
 # 从模型中获取预测程序、输入数据名称列表、分类器
-[infer_program, feeded_var_names, target_var] = fluid.io.load_inference_model(dirname=save_path, executor=exe)
+[infer_program,
+ feeded_var_names,
+ target_var] = fluid.io.load_inference_model(dirname=save_path,
+                                             executor=exe)
 
 
 # 获取数据

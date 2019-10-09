@@ -77,7 +77,7 @@ def get_data(tup, data_path):
                 # 通过新闻id判断是否已经下载过
                 if item_id not in downloaded_data_id:
                     downloaded_data_id.append(item_id)
-                    # 安装固定格式追加写入文件中
+                    # 按照固定格式追加写入文件中
                     line = u"{}_!_{}_!_{}_!_{}".format(item['item_id'], tup[0], tup[1], item['title'])
                     line = line.replace('\n', '').replace('\r', '')
                     line = line + '\n'
@@ -85,7 +85,7 @@ def get_data(tup, data_path):
                     downloaded_sum += 1
 
 
-def get_routine(data_path):
+def get_old_data(data_path):
     global downloaded_sum
     # 从文件中读取已经有的数据，避免数据重复
     if os.path.exists(data_path):
@@ -112,4 +112,4 @@ def get_routine(data_path):
 if __name__ == '__main__':
     data_path = 'datasets/news_classify_data.txt'
     # 下载数据集
-    get_routine(data_path)
+    get_old_data(data_path)

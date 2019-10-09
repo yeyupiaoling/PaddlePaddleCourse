@@ -5,12 +5,12 @@ import uuid
 from PIL import Image
 from flask import Flask, request, render_template
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
 from paddle.fluid.core import AnalysisConfig
 from paddle.fluid.core import PaddleBuf
 from paddle.fluid.core import PaddleDType
 from paddle.fluid.core import PaddleTensor
-from paddle.fluid.core import create_paddle_predictor
-from werkzeug.utils import secure_filename
+from paddle.fluid.core import create_paddle_predictor as PaddlePredictor
 
 app = Flask(__name__)
 # 允许跨越访问
@@ -37,6 +37,14 @@ def upload_file():
     return 'success, save path: ' + img_path
 
 
+# 配置预测器信息，指定模型路径
+config = AnalysisConfig('models')
+# 设置使用CPU
+config.disable_gpu()
+# 创建预测器
+predictor = PaddlePredictor(config)
+
+
 def load_image(img):
     img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     # 统一图像大小
@@ -60,14 +68,6 @@ def fake_input(img):
     return [image]
 
 
-# 配置预测器信息，指定模型路径
-config = AnalysisConfig('models')
-# 设置使用GPU
-config.disable_gpu()
-# 创建预测器
-predictor = create_paddle_predictor(config)
-
-
 @app.route('/infer', methods=['POST'])
 def infer():
     f = request.files['img']
@@ -76,10 +76,8 @@ def infer():
     inputs = fake_input(load_image(img))
     # 执行预测
     outputs = predictor.run(inputs)
-    # 获取第一个预测结果
-    output = outputs[0]
     # 获取预测概率值
-    result = output.data.float_data()
+    result = outputs[0].data.float_data()
     # 显示图片并输出结果最大的label
     lab = np.argsort(result)[-1]
     names = ['苹果', '哈密瓜', '胡萝卜', '樱桃', '黄瓜', '西瓜']
@@ -96,4 +94,4 @@ def index():
 
 if __name__ == "__main__":
     # 启动服务，并指定端口号
-    app.run(host='127.0.0.1', port=5000)
+    app.run(host='0.0.0.0', port=5000)

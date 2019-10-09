@@ -10,7 +10,10 @@ exe.run(fluid.default_startup_program())
 # 保存预测模型路径
 save_path = 'models/'
 # 从模型中获取预测程序、输入数据名称列表、分类器
-[infer_program, feeded_var_names, target_var] = fluid.io.load_inference_model(dirname=save_path, executor=exe)
+[infer_program,
+ feeded_var_names,
+ target_var] = fluid.io.load_inference_model(dirname=save_path,
+                                             executor=exe)
 
 
 # 预处理图片
@@ -29,7 +32,7 @@ def load_image(file):
 
 
 # 获取图片数据
-img = load_image('images/apple/0fdd5422-31e0-11e9-9cfd-3c970e769528.jpg')
+img = load_image('image/apple.jpg')
 
 # 执行预测
 result = exe.run(program=infer_program,
@@ -41,4 +44,5 @@ lab = np.argsort(result)[0][0][-1]
 
 names = ['苹果', '哈密瓜', '胡萝卜', '樱桃', '黄瓜', '西瓜']
 
-print('预测结果标签为：%d， 名称为：%s， 概率为：%f' % (lab, names[lab], result[0][0][lab]))
+print('预测结果标签为：%d， 名称为：%s， 概率为：%f' % (
+    lab, names[lab], result[0][0][lab]))

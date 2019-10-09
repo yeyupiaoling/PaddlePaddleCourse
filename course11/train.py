@@ -9,7 +9,8 @@ crop_size = 224
 resize_size = 250
 
 # 定义输入层
-image = fluid.layers.data(name='image', shape=[3, crop_size, crop_size], dtype='float32')
+image = fluid.layers.data(name='image', shape=[3, crop_size, crop_size],
+                          dtype='float32')
 label = fluid.layers.data(name='label', shape=[1], dtype='int64')
 
 # 获取分类器，因为这次只爬取了6个类别的图片，所以分类器的类别大小为6
@@ -24,13 +25,18 @@ acc = fluid.layers.accuracy(input=model, label=label)
 test_program = fluid.default_main_program().clone(for_test=True)
 
 # 定义优化方法
+l2 = fluid.regularizer.L2DecayRegularizer(1e-4)
 optimizer = fluid.optimizer.AdamOptimizer(learning_rate=1e-3,
-                                          regularization=fluid.regularizer.L2DecayRegularizer(1e-4))
+                                          regularization=l2)
 opts = optimizer.minimize(avg_cost)
 
 # 获取自定义数据
-train_reader = paddle.batch(reader=reader.train_reader('images/train.list', crop_size, resize_size), batch_size=32)
-test_reader = paddle.batch(reader=reader.test_reader('images/test.list', crop_size), batch_size=32)
+train_reader = paddle.batch(
+    reader=reader.train_reader('images/train.list',
+                               crop_size, resize_size), batch_size=32)
+test_reader = paddle.batch(
+    reader=reader.test_reader('images/test.list',
+                              crop_size), batch_size=32)
 
 # 定义一个使用GPU的执行器
 place = fluid.CUDAPlace(0)
@@ -42,7 +48,7 @@ exe.run(fluid.default_startup_program())
 # 定义输入数据维度
 feeder = fluid.DataFeeder(place=place, feed_list=[image, label])
 
-# 训练10次
+# 训练100次
 for pass_id in range(100):
     # 进行训练
     for batch_id, data in enumerate(train_reader()):
@@ -76,4 +82,7 @@ for pass_id in range(100):
     # 创建保持模型文件目录
     os.makedirs(save_path)
     # 保存预测模型
-    fluid.io.save_inference_model(save_path, feeded_var_names=[image.name], target_vars=[model], executor=exe)
+    fluid.io.save_inference_model(dirname=save_path,
+                                  feeded_var_names=[image.name],
+                                  target_vars=[model],
+                                  executor=exe)
