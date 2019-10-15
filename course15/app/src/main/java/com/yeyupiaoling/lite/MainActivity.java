@@ -12,6 +12,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -29,7 +30,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
     private String model_path;
     // 模型文件夹
-    String assets_path = "model";
+    String assets_path = "optimize_model";
     private boolean load_result = false;
     // 输入图片的形状，分别是：batch size、通道数、宽度、高度
     private long[] ddims = {1, 3, 224, 224};
@@ -43,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        model_path = getCacheDir().getAbsolutePath() + File.separator + "model";
+        model_path = getCacheDir().getAbsolutePath() + File.separator + assets_path;
         // 初始化控件
         initView();
         // 动态请求权限
@@ -60,15 +61,18 @@ public class MainActivity extends AppCompatActivity {
         showTv = findViewById(R.id.show);
         imageView = findViewById(R.id.image_view);
 
-        final MobileConfig config = new MobileConfig();
-        config.setModelDir(model_path);
-        config.setThreads(2);
+
 
         // 加载模型点击事件
         loadBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                MobileConfig config = new MobileConfig();
+                config.setModelDir(model_path);
+                config.setThreads(2);
                 paddlePredictor = PaddlePredictor.createPaddlePredictor(config);
+
                 if (paddlePredictor != null) {
                     load_result = true;
                     Toast.makeText(MainActivity.this, "模型加载成功", Toast.LENGTH_SHORT).show();
@@ -147,9 +151,9 @@ public class MainActivity extends AppCompatActivity {
             int r = Utils.getMaxResult(result);
             // 获取标签对应的类别名称
             String[] names = {"苹果", "哈密瓜", "胡萝卜", "樱桃", "黄瓜", "西瓜"};
-            String show_text = "标签：" + r + "\n名称：" + names[r] + "\n概率：" + result[r] + "\n时间：" + (end - start) + "ms";
+//            String show_text = "标签：" + r + "\n名称：" + names[r] + "\n概率：" + result[r] + "\n时间：" + (end - start) + "ms";
             // 显示预测结果
-            showTv.setText(show_text);
+            showTv.setText(r + ", " + result[r]);
         } catch (Exception e) {
             e.printStackTrace();
         }
