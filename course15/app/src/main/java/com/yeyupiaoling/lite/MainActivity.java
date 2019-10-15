@@ -12,7 +12,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -151,9 +150,9 @@ public class MainActivity extends AppCompatActivity {
             int r = Utils.getMaxResult(result);
             // 获取标签对应的类别名称
             String[] names = {"苹果", "哈密瓜", "胡萝卜", "樱桃", "黄瓜", "西瓜"};
-//            String show_text = "标签：" + r + "\n名称：" + names[r] + "\n概率：" + result[r] + "\n时间：" + (end - start) + "ms";
+            String show_text = "标签：" + r + "\n名称：" + names[r] + "\n概率：" + result[r] + "\n时间：" + (end - start) + "ms";
             // 显示预测结果
-            showTv.setText(r + ", " + result[r]);
+            showTv.setText(show_text);
         } catch (Exception e) {
             e.printStackTrace();
         }

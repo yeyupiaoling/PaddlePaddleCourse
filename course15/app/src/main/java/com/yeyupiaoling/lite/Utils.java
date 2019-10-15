@@ -32,22 +32,6 @@ public class Utils {
 
     // 对将要预测的图片进行预处理
     public static float[] getScaledMatrix(Bitmap image, int desWidth, int desHeight, int channels) {
-//        Bitmap rgbaImage = image.copy(Bitmap.Config.ARGB_8888, true);
-//        Bitmap scaleImage = Bitmap.createScaledBitmap(rgbaImage, desWidth, desHeight, true);
-//        int[] channelStride = new int[]{desWidth * desHeight, desWidth * desHeight * 2};
-//        float[] inputData = new float[channels * desWidth * desHeight];
-//        for (int y = 0; y < desHeight; y++) {
-//            for (int x = 0; x < desWidth; x++) {
-//                int color = inputImage.getPixel(x, y);
-//                float[] rgb = new float[]{(float) red(color) / 255.0f, (float) green(color) / 255.0f,
-//                        (float) blue(color) / 255.0f};
-//                inputData[y * width + x] = (rgb[channelIdx[0]] - inputMean[0]) / inputStd[0];
-//                inputData[y * width + x + channelStride[0]] = (rgb[channelIdx[1]] - inputMean[1]) / inputStd[1];
-//                inputData[y * width + x + channelStride[1]] = (rgb[channelIdx[2]] - inputMean[2]) / inputStd[2];
-//            }
-//        }
-//
-
         float[] dataBuf = new float[channels * desWidth * desHeight];
         int rIndex;
         int gIndex;
@@ -65,9 +49,9 @@ public class Utils {
             gIndex = rIndex + desHeight * desWidth;
             bIndex = gIndex + desHeight * desWidth;
             // 转成RGB通道顺序，并除以255，跟训练的预处理一样
-            dataBuf[rIndex] = (float) (((clr & 0x00ff0000) >> 16) / 255.0);
+            dataBuf[bIndex] = (float) (((clr & 0x00ff0000) >> 16) / 255.0);
             dataBuf[gIndex] = (float) (((clr & 0x0000ff00) >> 8) / 255.0);
-            dataBuf[bIndex] = (float) (((clr & 0x000000ff)) / 255.0);
+            dataBuf[rIndex] = (float) (((clr & 0x000000ff)) / 255.0);
 
         }
         if (bm.isRecycled()) {
