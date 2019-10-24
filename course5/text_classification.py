@@ -73,7 +73,7 @@ for pass_id in range(1):
         train_cost, train_acc = exe.run(program=fluid.default_main_program(),
                                         feed=feeder.feed(data),
                                         fetch_list=[avg_cost, acc])
-        if batch_id % 100 == 0:
+        if batch_id % 10 == 0:
             print('Pass:%d, Batch:%d, Cost:%0.5f, Accuracy:%0.5f' %
                   (pass_id, batch_id, train_cost[0], train_acc[0]))
 

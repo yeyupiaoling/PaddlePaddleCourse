@@ -9,7 +9,7 @@ with fluid.dygraph.guard(place=fluid.CPUPlace()):
     # 获取网络结构
     cnn_infer = CNN("mnist")
     # 加载模型参数
-    param_dict, _ = fluid.dygraph.load_persistables("models")
+    param_dict, _ = fluid.dygraph.load_dygraph("models/cnn")
     # 把参数加载到网络中
     cnn_infer.load_dict(param_dict)
     # 开始执行预测

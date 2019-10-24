@@ -40,8 +40,8 @@ with fluid.dygraph.guard(place=fluid.CPUPlace()):
     # 获取网络模型，并指定网络名称
     cnn = CNN("mnist")
     # 如果之前已经保存模型，可以在这里加载模型
-    if os.path.exists('models'):
-        param_dict, _ = fluid.dygraph.load_persistables("models")
+    if os.path.exists('models/cnn.pdparams'):
+        param_dict, _ = fluid.dygraph.load_dygraph("models/cnn")
         # 加载模型中的参数
         cnn.load_dict(param_dict)
     # 获取优化方法
@@ -84,5 +84,7 @@ with fluid.dygraph.guard(place=fluid.CPUPlace()):
         cnn.train()
         print("Test:%d, Loss:%f, Accuracy:%f" % (epoch, test_cost, test_acc))
 
+        if not os.path.exists('models'):
+            os.makedirs('models')
         # 保存模型
-        fluid.dygraph.save_persistables(model_dict=cnn.state_dict(), dirname="models")
+        fluid.dygraph.save_dygraph(state_dict=cnn.state_dict(), model_path="models/cnn")
