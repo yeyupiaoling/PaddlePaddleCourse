@@ -6,9 +6,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 import static android.graphics.Color.blue;
@@ -101,41 +103,28 @@ public class Utils {
 
 
     // 复制莫模型文件到缓存目录
-    public static void copyFileFromAsset(Context context, String oldPath, String newPath) {
+    public static void copyFileFromAsset(Context context, String assets_path, String new_path) {
+        File new_file = new File(new_path);
+        if (new_file.exists()) {
+            return;
+        }
+        File father_path = new File(new File(new_path).getParent());
+        if (!father_path.exists()) {
+            father_path.mkdirs();
+        }
         try {
-            // 预测模型文件在assets中的位置
-            String[] fileNames = context.getAssets().list(oldPath);
-            if (fileNames.length > 0) {
-                // directory
-                File file = new File(newPath);
-                if (!file.exists()) {
-                    file.mkdirs();
-                }
-                // copy recursivelyC
-                for (String fileName : fileNames) {
-                    copyFileFromAsset(context, oldPath + "/" + fileName, newPath + "/" + fileName);
-                }
-            } else {
-                // file
-                File file = new File(newPath);
-                // if file exists will never copy
-                if (file.exists()) {
-                    return;
-                }
-
-                // copy file to new path
-                InputStream is = context.getAssets().open(oldPath);
-                FileOutputStream fos = new FileOutputStream(file);
-                byte[] buffer = new byte[1024];
-                int byteCount;
-                while ((byteCount = is.read(buffer)) != -1) {
-                    fos.write(buffer, 0, byteCount);
-                }
-                fos.flush();
-                is.close();
-                fos.close();
+            InputStream is = context.getAssets().open(assets_path);
+            FileOutputStream fos = new FileOutputStream(new_file);
+            byte[] buffer = new byte[1024];
+            int byteCount;
+            while ((byteCount = is.read(buffer)) != -1) {
+                fos.write(buffer, 0, byteCount);
             }
-        } catch (Exception e) {
+            fos.flush();
+            is.close();
+            fos.close();
+            Log.d("utils", "the model file is copied");
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

@@ -4,7 +4,7 @@ import paddle.dataset.uci_housing as uci_housing
 import numpy
 
 # 定义一个简单的线性网络
-x = fluid.layers.data(name='x', shape=[13], dtype='float32')
+x = fluid.data(name='x', shape=[None, 13], dtype='float32')
 hidden = fluid.layers.fc(input=x, size=100, act='relu')
 hidden = fluid.layers.fc(input=hidden, size=100, act='relu')
 net = fluid.layers.fc(input=hidden, size=1, act=None)
@@ -13,7 +13,7 @@ net = fluid.layers.fc(input=hidden, size=1, act=None)
 infer_program = fluid.default_main_program().clone(for_test=True)
 
 # 定义损失函数
-y = fluid.layers.data(name='y', shape=[1], dtype='float32')
+y = fluid.data(name='y', shape=[None, 1], dtype='float32')
 cost = fluid.layers.square_error_cost(input=net, label=y)
 avg_cost = fluid.layers.mean(cost)
 

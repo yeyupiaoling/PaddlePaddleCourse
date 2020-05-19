@@ -83,7 +83,7 @@ def get_params(program, prefix):
 # 训练判别器D识别真实图片
 with fluid.program_guard(train_d_real, startup):
     # 创建读取真实数据集图片的data，并且label为1
-    real_img = fluid.layers.data('image', shape=[1, 28, 28])
+    real_img = fluid.data('image', shape=[None, 1, 28, 28])
     ones = fluid.layers.fill_constant_batch_size_like(real_img, shape=[-1, 1], dtype='float32', value=1)
 
     # 判别器D判断真实图片的概率
@@ -102,7 +102,7 @@ with fluid.program_guard(train_d_real, startup):
 # 训练判别器D识别生成器G生成的图片为假图片
 with fluid.program_guard(train_d_fake, startup):
     # 利用创建假的图片data，并且label为0
-    z = fluid.layers.data(name='z', shape=[z_dim])
+    z = fluid.data(name='z', shape=[None, z_dim])
     zeros = fluid.layers.fill_constant_batch_size_like(z, shape=[-1, 1], dtype='float32', value=0)
 
     # 判别器D判断假图片的概率
@@ -122,7 +122,7 @@ with fluid.program_guard(train_d_fake, startup):
 # 训练生成器G生成符合判别器D标准的假图片
 with fluid.program_guard(train_g, startup):
     # 噪声生成图片为真实图片的概率，Label为1
-    z = fluid.layers.data(name='z', shape=[z_dim])
+    z = fluid.data(name='z', shape=[None, z_dim])
     ones = fluid.layers.fill_constant_batch_size_like(z, shape=[-1, 1], dtype='float32', value=1)
 
     # 生成图片

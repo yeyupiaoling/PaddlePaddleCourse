@@ -9,8 +9,8 @@ import text_reader
 import bilstm_net
 
 # 定义输入数据， lod_level不为0指定输入数据为序列数据
-words = fluid.layers.data(name='words', shape=[1], dtype='int64', lod_level=1)
-label = fluid.layers.data(name='label', shape=[1], dtype='int64')
+words = fluid.data(name='words', shape=[None, 1], dtype='int64', lod_level=1)
+label = fluid.data(name='label', shape=[None, 1], dtype='int64')
 
 # 获取数据字典长度
 dict_dim = create_data.get_dict_len('datasets/dict_txt.txt')

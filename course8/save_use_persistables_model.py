@@ -35,8 +35,8 @@ def vgg16(input, class_dim=1000):
 
 
 # 定义输入层
-image = fluid.layers.data(name='image', shape=[3, 32, 32], dtype='float32')
-label = fluid.layers.data(name='label', shape=[1], dtype='int64')
+image = fluid.data(name='image', shape=[None, 3, 32, 32], dtype='float32')
+label = fluid.data(name='label', shape=[None, 1], dtype='int64')
 
 # 获取分类器
 model = vgg16(image, 10)

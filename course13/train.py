@@ -45,7 +45,9 @@ with fluid.dygraph.guard(place=fluid.CPUPlace()):
         # 加载模型中的参数
         cnn.load_dict(param_dict)
     # 获取优化方法
-    momentum = fluid.optimizer.MomentumOptimizer(learning_rate=1e-3, momentum=0.9)
+    momentum = fluid.optimizer.MomentumOptimizer(learning_rate=1e-3,
+                                                 momentum=0.9,
+                                                 parameter_list=cnn.parameters())
 
     # 获取训练和测试数据
     train_reader = paddle.batch(paddle.dataset.mnist.train(), batch_size=BATCH_SIZE, drop_last=True)

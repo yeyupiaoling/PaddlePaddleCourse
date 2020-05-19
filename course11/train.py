@@ -1,6 +1,7 @@
 import os
 import shutil
 import mobilenet_v1
+import numpy
 import paddle as paddle
 import reader
 import paddle.fluid as fluid
@@ -9,9 +10,8 @@ crop_size = 224
 resize_size = 250
 
 # 定义输入层
-image = fluid.layers.data(name='image', shape=[3, crop_size, crop_size],
-                          dtype='float32')
-label = fluid.layers.data(name='label', shape=[1], dtype='int64')
+image = fluid.data(name='image', shape=[None, 3, crop_size, crop_size], dtype='float32')
+label = fluid.data(name='label', shape=[None, 1], dtype='int64')
 
 # 获取分类器，因为这次只爬取了6个类别的图片，所以分类器的类别大小为6
 model = mobilenet_v1.net(image, 6)

@@ -5,11 +5,11 @@ class CNN(fluid.dygraph.Layer):
     def __init__(self, name_scope):
         super(CNN, self).__init__(name_scope)
         # 定义每个网络的结构
-        self.conv1 = fluid.dygraph.Conv2D(self.full_name(), 20, 5, act="relu")
-        self.conv2 = fluid.dygraph.Conv2D(self.full_name(), 50, 5, act="relu")
-        self.pool1 = fluid.dygraph.Pool2D(self.full_name(), pool_size=2, pool_type='max',
-                                          pool_stride=2)
-        self.fc = fluid.dygraph.FC(self.full_name(), size=10, act='softmax')
+        self.conv1 = fluid.dygraph.nn.Conv2D(num_channels=1, num_filters=20, filter_size=5, act="relu")
+        self.conv2 = fluid.dygraph.nn.Conv2D(num_channels=20, num_filters=50, filter_size=5, act="relu")
+        self.pool1 = fluid.dygraph.nn.Pool2D(pool_size=2, pool_type='max', pool_stride=2)
+        self.input_dim = 50 * 4 * 4
+        self.fc = fluid.dygraph.nn.Linear(input_dim=self.input_dim, output_dim=10, act='softmax')
 
     def forward(self, inputs):
         # 把每个网络组合在一起
@@ -17,5 +17,8 @@ class CNN(fluid.dygraph.Layer):
         x = self.pool1(x)
         x = self.conv2(x)
         x = self.pool1(x)
+        x = fluid.layers.reshape(x, shape=[-1, self.input_dim])
         x = self.fc(x)
         return x
+
+

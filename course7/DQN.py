@@ -26,11 +26,11 @@ def DQNetWork(ipt, variable_field):
 
 
 # 定义输入数据
-state_data = fluid.layers.data(name='state', shape=[4], dtype='float32')
-action_data = fluid.layers.data(name='action', shape=[1], dtype='int64')
-reward_data = fluid.layers.data(name='reward', shape=[], dtype='float32')
-next_state_data = fluid.layers.data(name='next_state', shape=[4], dtype='float32')
-done_data = fluid.layers.data(name='done', shape=[], dtype='float32')
+state_data = fluid.data(name='state', shape=[None, 4], dtype='float32')
+action_data = fluid.data(name='action', shape=[None, 1], dtype='int64')
+reward_data = fluid.data(name='reward', shape=[None], dtype='float32')
+next_state_data = fluid.data(name='next_state', shape=[None, 4], dtype='float32')
+done_data = fluid.data(name='done', shape=[None], dtype='float32')
 
 # 实例化一个游戏环境，参数为游戏名称
 env = gym.make("CartPole-v1")
@@ -149,7 +149,7 @@ for epsilon_id in range(num_episodes):
 
             # 调整数据维度
             batch_action = np.expand_dims(batch_action, axis=-1)
-            batch_next_state = np.expand_dims(batch_next_state, axis=1)
+            batch_state = np.squeeze(batch_state, axis=1)
 
             # 执行训练
             exe.run(program=fluid.default_main_program(),

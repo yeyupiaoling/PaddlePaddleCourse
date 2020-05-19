@@ -28,8 +28,8 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private String model_path;
-    // 模型文件夹
-    String assets_path = "optimize_model";
+    // 模型文件
+    String modelPath = "mobilenet_v1.nb";
     private boolean load_result = false;
     // 输入图片的形状，分别是：batch size、通道数、宽度、高度
     private long[] ddims = {1, 3, 224, 224};
@@ -43,13 +43,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        model_path = getCacheDir().getAbsolutePath() + File.separator + assets_path;
+        model_path = getCacheDir().getAbsolutePath() + File.separator + modelPath;
         // 初始化控件
         initView();
         // 动态请求权限
         requestPermissions();
         // 从assets中复制模型文件到缓存目录下
-        Utils.copyFileFromAsset(this, assets_path, model_path);
+        Utils.copyFileFromAsset(this, modelPath, model_path);
     }
 
     // 初始化控件
@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 MobileConfig config = new MobileConfig();
-                config.setModelDir(model_path);
+                config.setModelFromFile(model_path);
                 config.setThreads(2);
                 paddlePredictor = PaddlePredictor.createPaddlePredictor(config);
 

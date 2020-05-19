@@ -29,7 +29,7 @@ def upload_file():
     f = request.files['img']
     # 设置保存路径
     save_father_path = 'images'
-    img_path = os.path.join(save_father_path, str(uuid.uuid1()) +
+    img_path = os.path.join(save_father_path, str(uuid.uuid1()) + "." +
                             secure_filename(f.filename).split('.')[-1])
     if not os.path.exists(save_father_path):
         os.makedirs(save_father_path)

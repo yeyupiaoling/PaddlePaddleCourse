@@ -22,8 +22,8 @@ def rnn_net(ipt, input_dim):
 
 
 # 定义输入数据， lod_level不为0指定输入数据为序列数据
-words = fluid.layers.data(name='words', shape=[1], dtype='int64', lod_level=1)
-label = fluid.layers.data(name='label', shape=[1], dtype='int64')
+words = fluid.data(name='words', shape=[None, 1], dtype='int64', lod_level=1)
+label = fluid.data(name='label', shape=[None, 1], dtype='int64')
 
 # 获取数据字典
 print("加载数据字典中...")
@@ -49,8 +49,8 @@ optimizer = fluid.optimizer.AdagradOptimizer(learning_rate=0.002)
 opt = optimizer.minimize(avg_cost)
 
 # 创建一个执行器，CPU训练速度比较慢
-place = fluid.CPUPlace()
-# place = fluid.CUDAPlace(0)
+# place = fluid.CPUPlace()
+place = fluid.CUDAPlace(0)
 exe = fluid.Executor(place)
 # 进行参数初始化
 exe.run(fluid.default_startup_program())
