@@ -3,12 +3,11 @@ from PIL import Image
 import numpy as np
 from cnn import CNN
 
-
 place = paddle.CPUPlace()
 paddle.enable_imperative(place)
 
 # 获取网络结构
-cnn_infer = CNN("mnist")
+cnn_infer = CNN()
 # 加载模型参数
 param_dict, _ = paddle.imperative.load("models/cnn")
 # 把参数加载到网络中

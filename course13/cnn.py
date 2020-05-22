@@ -1,10 +1,9 @@
-import paddle.fluid as fluid
 import paddle
 
 
 class CNN(paddle.nn.Layer):
-    def __init__(self, name_scope):
-        super(CNN, self).__init__(name_scope)
+    def __init__(self):
+        super(CNN, self).__init__()
         # 定义每个网络的结构
         self.conv1 = paddle.nn.Conv2D(num_channels=1, num_filters=20, filter_size=5, act="relu")
         self.conv2 = paddle.nn.Conv2D(num_channels=20, num_filters=50, filter_size=5, act="relu")

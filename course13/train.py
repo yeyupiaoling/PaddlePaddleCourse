@@ -37,8 +37,8 @@ def test_train(reader, model, batch_size):
 
 
 BATCH_SIZE = 64
-# 获取网络模型，并指定网络名称
-cnn = CNN("mnist")
+# 获取网络模型
+cnn = CNN()
 # 如果之前已经保存模型，可以在这里加载模型
 if os.path.exists('models/cnn.pdparams'):
     param_dict, _ = paddle.imperative.load("models/cnn")
