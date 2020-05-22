@@ -62,8 +62,6 @@ for epoch in range(2):
         # 把训练数据转换为动态图所需的Variable类型
         img = paddle.imperative.to_variable(dy_x_data)
         label = paddle.imperative.to_variable(y_data)
-        # 不需要训练label
-        label.stop_gradient = True
         # 获取网络输出
         predict = cnn(img)
         # 获取准确率函数和损失函数
