@@ -5,7 +5,7 @@ import numpy as np
 
 
 def rnn_net(ipt, input_dim):
-    emb = fluid.layers.embedding(input=ipt, size=[input_dim, 128], is_sparse=True)
+    emb = fluid.embedding(input=ipt, size=[input_dim, 128], is_sparse=True)
     sentence = fluid.layers.fc(input=emb, size=128, act='tanh')
 
     rnn = fluid.layers.DynamicRNN()

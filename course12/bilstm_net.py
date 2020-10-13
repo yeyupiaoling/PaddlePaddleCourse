@@ -3,7 +3,7 @@ import paddle.fluid as fluid
 
 def bilstm_net(data, dict_dim, class_dim, emb_dim=128, hid_dim=128, hid_dim2=96, emb_lr=30.0):
     # embedding layer
-    emb = fluid.layers.embedding(input=data,
+    emb = fluid.embedding(input=data,
                                  size=[dict_dim, emb_dim],
                                  param_attr=fluid.ParamAttr(learning_rate=emb_lr))
 

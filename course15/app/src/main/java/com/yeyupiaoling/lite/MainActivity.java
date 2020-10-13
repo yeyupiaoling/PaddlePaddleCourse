@@ -149,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
             // 获取概率最大的标签
             int r = Utils.getMaxResult(result);
             // 获取标签对应的类别名称
-            String[] names = {"苹果", "哈密瓜", "胡萝卜", "樱桃", "黄瓜", "西瓜"};
+            String[] names = {"苹果", "哈密瓜", "樱桃", "葡萄", "梨", "西瓜"};
             String show_text = "标签：" + r + "\n名称：" + names[r] + "\n概率：" + result[r] + "\n时间：" + (end - start) + "ms";
             // 显示预测结果
             showTv.setText(show_text);
