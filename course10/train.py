@@ -7,17 +7,7 @@ import paddle.fluid as fluid
 from visualdl import LogWriter
 
 # 创建记录器
-log_writer = LogWriter(dir='log/', sync_cycle=10)
-
-# 创建训练和测试记录数据工具
-with log_writer.mode('train') as writer:
-    train_cost_writer = writer.scalar('cost')
-    train_acc_writer = writer.scalar('accuracy')
-    histogram = writer.histogram('histogram', num_buckets=50)
-
-with log_writer.mode('test') as writer:
-    test_cost_writer = writer.scalar('cost')
-    test_acc_writer = writer.scalar('accuracy')
+writer = LogWriter(logdir='log/')
 
 # 定义输入层
 image = fluid.data(name='image', shape=[None, 3, 32, 32], dtype='float32')
@@ -69,9 +59,9 @@ for pass_id in range(10):
                                                 fetch_list=[avg_cost, acc, params_name])
         # 保存训练的日志数据
         train_step += 1
-        train_cost_writer.add_record(train_step, train_cost[0])
-        train_acc_writer.add_record(train_step, train_acc[0])
-        histogram.add_record(train_step, params.flatten())
+        writer.add_scalar(tag="训练/损失值", step=train_step, value=train_cost[0])
+        writer.add_scalar(tag="训练/准确率", step=train_step, value=train_cost[0])
+        writer.add_histogram(tag="训练/参数分布", step=train_step, values=params.flatten(), buckets=50)
 
         # 每100个batch打印一次信息
         if batch_id % 100 == 0:
@@ -87,12 +77,11 @@ for pass_id in range(10):
                                       fetch_list=[avg_cost, acc])
         # 保存测试的日志数据
         test_step += 1
-        test_cost_writer.add_record(test_step, test_cost[0])
-        test_acc_writer.add_record(test_step, test_acc[0])
+        writer.add_scalar(tag="测试/损失值", step=test_step, value=test_cost[0])
+        writer.add_scalar(tag="测试/准确率", step=test_step, value=test_acc[0])
 
         print('Test:%d, Batch:%d, Cost:%0.5f, Accuracy:%0.5f' % (
             pass_id, batch_id, test_cost, test_acc))
-
 
     # 保存预测模型
     save_path = 'models/'

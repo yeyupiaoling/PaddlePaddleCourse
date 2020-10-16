@@ -21,8 +21,10 @@ def download_image(key_word, save_name, download_max):
         url = 'http://image.baidu.com/search/flip?tn=baiduimage&ie=utf-8&' \
               'word=' + key_word + '&pn=' + str_pn + '&gsm=80&ct=&ic=0&lm=-1&width=0&height=0'
         try:
+            s = requests.session()
+            s.headers['User-Agent'] = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
             # 获取当前页面的源码
-            result = requests.get(url, timeout=30).text
+            result = s.get(url).content.decode('utf-8')
             # 获取当前页面的图片URL
             img_urls = re.findall('"objURL":"(.*?)",', result, re.S)
             if img_urls is None or len(img_urls) < 1:
@@ -39,7 +41,8 @@ def download_image(key_word, save_name, download_max):
                 # 下载次数超过指定值就停止下载
                 if download_sum >= download_max:
                     break
-        except:
+        except Exception as e:
+            print(e)
             continue
     print('下载完成')
 
