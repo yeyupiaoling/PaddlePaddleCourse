@@ -60,7 +60,7 @@ for pass_id in range(10):
         # 保存训练的日志数据
         train_step += 1
         writer.add_scalar(tag="训练/损失值", step=train_step, value=train_cost[0])
-        writer.add_scalar(tag="训练/准确率", step=train_step, value=train_cost[0])
+        writer.add_scalar(tag="训练/准确率", step=train_step, value=train_acc[0])
         writer.add_histogram(tag="训练/参数分布", step=train_step, values=params.flatten(), buckets=50)
 
         # 每100个batch打印一次信息
