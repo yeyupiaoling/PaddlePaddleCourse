@@ -4,7 +4,7 @@ import paddle
 from cnn import CNN
 
 place = paddle.CPUPlace()
-paddle.disable_static(place)
+paddle.enable_imperative(place)
 
 
 # 测函数
@@ -16,8 +16,8 @@ def test_train(reader, model, batch_size):
         dy_x_data = np.array([x[0].reshape(1, 28, 28) for x in data]).astype('float32')
         y_data = np.array([x[1] for x in data]).astype('int64').reshape(batch_size, 1)
         # 把训练数据转换为动态图所需的Variable类型
-        img = paddle.to_variable(dy_x_data)
-        label = paddle.to_variable(y_data)
+        img = paddle.imperative.to_variable(dy_x_data)
+        label = paddle.imperative.to_variable(y_data)
         label.stop_gradient = True
         # 获取网络输出
         test_predict = model(img)
@@ -40,7 +40,9 @@ BATCH_SIZE = 64
 cnn = CNN()
 # 如果之前已经保存模型，可以在这里加载模型
 if os.path.exists('models/cnn.pdparams'):
-    paddle.Model.load(cnn, "models/cnn")
+    param_dict, _ = paddle.imperative.load("models/cnn")
+    # 加载模型中的参数
+    cnn.load_dict(param_dict)
 # 获取优化方法
 momentum = paddle.optimizer.MomentumOptimizer(learning_rate=1e-3,
                                               momentum=0.9,
@@ -57,8 +59,8 @@ for epoch in range(2):
         dy_x_data = np.array([x[0].reshape(1, 28, 28) for x in data]).astype('float32')
         y_data = np.array([x[1] for x in data]).astype('int64').reshape(BATCH_SIZE, 1)
         # 把训练数据转换为动态图所需的Variable类型
-        img = paddle.to_variable(dy_x_data)
-        label = paddle.to_variable(y_data)
+        img = paddle.imperative.to_variable(dy_x_data)
+        label = paddle.imperative.to_variable(y_data)
         # 获取网络输出
         predict = cnn(img)
         # 获取准确率函数和损失函数
@@ -84,4 +86,4 @@ for epoch in range(2):
     if not os.path.exists('models'):
         os.makedirs('models')
     # 保存模型
-    paddle.Model.save(cnn, "models/cnn")
+    paddle.imperative.save(state_dict=cnn.state_dict(), model_path="models/cnn")
