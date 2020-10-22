@@ -1,17 +1,15 @@
-import paddle.fluid as fluid
+import paddle
 from PIL import Image
 import numpy as np
 from cnn import CNN
 
-place = fluid.CPUPlace()
-fluid.dygraph.enable_imperative(place)
+place = paddle.CUDAPlace()
+paddle.disable_static(place)
 
 # 获取网络结构
 cnn_infer = CNN()
 # 加载模型参数
-param_dict, _ = fluid.load_dygraph("models/cnn")
-# 把参数加载到网络中
-cnn_infer.load_dict(param_dict)
+paddle.Model.load(cnn_infer, "models/cnn")
 # 开始执行预测
 cnn_infer.eval()
 
@@ -28,7 +26,7 @@ def load_image(file):
 # 获取预测数据
 tensor_img = load_image('image/infer_3.png')
 # 执行预测
-results = cnn_infer(fluid.dygraph.base.to_variable(tensor_img))
+results = cnn_infer(paddle.to_variable(tensor_img))
 # 安装概率从大到小排序标签
 lab = np.argsort(-results.numpy())
 print("infer_3.png 预测的结果为: %d" % lab[0][0])

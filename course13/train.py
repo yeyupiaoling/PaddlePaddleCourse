@@ -1,12 +1,10 @@
 import os
 import numpy as np
 import paddle
-import paddle.fluid as fluid
 from cnn import CNN
 
-
-place = fluid.CPUPlace()
-fluid.dygraph.enable_imperative(place)
+place = paddle.CPUPlace()
+paddle.disable_static(place)
 
 
 # 测函数
@@ -18,15 +16,15 @@ def test_train(reader, model, batch_size):
         dy_x_data = np.array([x[0].reshape(1, 28, 28) for x in data]).astype('float32')
         y_data = np.array([x[1] for x in data]).astype('int64').reshape(batch_size, 1)
         # 把训练数据转换为动态图所需的Variable类型
-        img = fluid.dygraph.base.to_variable(dy_x_data)
-        label = fluid.dygraph.base.to_variable(y_data)
+        img = paddle.to_variable(dy_x_data)
+        label = paddle.to_variable(y_data)
         label.stop_gradient = True
         # 获取网络输出
         test_predict = model(img)
         # 获取准确率函数和损失函数
-        test_accuracy = fluid.layers.accuracy(input=test_predict, label=label)
-        test_loss = fluid.layers.cross_entropy(input=test_predict, label=label)
-        test_avg_loss = fluid.layers.mean(test_loss)
+        test_accuracy = paddle.metric.accuracy(input=test_predict, label=label)
+        test_loss = paddle.nn.functional.cross_entropy(input=test_predict, label=label)
+        test_avg_loss = paddle.mean(test_loss)
         # 保存每次的计算结果
         acc_set.append(float(test_accuracy.numpy()))
         avg_loss_set.append(float(test_avg_loss.numpy()))
@@ -42,13 +40,11 @@ BATCH_SIZE = 64
 cnn = CNN()
 # 如果之前已经保存模型，可以在这里加载模型
 if os.path.exists('models/cnn.pdparams'):
-    param_dict, _ = fluid.load_dygraph("models/cnn")
-    # 加载模型中的参数
-    cnn.set_dict(param_dict)
+    paddle.Model.load(cnn, "models/cnn")
 # 获取优化方法
-momentum = fluid.optimizer.MomentumOptimizer(learning_rate=1e-3,
-                                             momentum=0.9,
-                                             parameter_list=cnn.parameters())
+momentum = paddle.optimizer.MomentumOptimizer(learning_rate=1e-3,
+                                              momentum=0.9,
+                                              parameter_list=cnn.parameters())
 
 # 获取训练和测试数据
 train_reader = paddle.batch(paddle.dataset.mnist.train(), batch_size=BATCH_SIZE, drop_last=True)
@@ -61,14 +57,14 @@ for epoch in range(2):
         dy_x_data = np.array([x[0].reshape(1, 28, 28) for x in data]).astype('float32')
         y_data = np.array([x[1] for x in data]).astype('int64').reshape(BATCH_SIZE, 1)
         # 把训练数据转换为动态图所需的Variable类型
-        img = fluid.dygraph.base.to_variable(dy_x_data)
-        label = fluid.dygraph.base.to_variable(y_data)
+        img = paddle.to_variable(dy_x_data)
+        label = paddle.to_variable(y_data)
         # 获取网络输出
         predict = cnn(img)
         # 获取准确率函数和损失函数
-        accuracy = fluid.layers.accuracy(input=predict, label=label)
-        loss = fluid.layers.cross_entropy(predict, label)
-        avg_loss = fluid.layers.mean(loss)
+        accuracy = paddle.metric.accuracy(input=predict, label=label)
+        loss = paddle.nn.functional.cross_entropy(predict, label)
+        avg_loss = paddle.mean(loss)
         # 计算梯度
         avg_loss.backward()
         momentum.minimize(avg_loss)
@@ -88,4 +84,4 @@ for epoch in range(2):
     if not os.path.exists('models'):
         os.makedirs('models')
     # 保存模型
-    fluid.save_dygraph(state_dict=cnn.state_dict(), model_path="models/cnn")
+    paddle.Model.save(cnn, "models/cnn")

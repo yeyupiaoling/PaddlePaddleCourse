@@ -80,7 +80,7 @@ def infer():
     result = outputs[0].data.float_data()
     # 显示图片并输出结果最大的label
     lab = np.argsort(result)[-1]
-    names = ['苹果', '哈密瓜', '胡萝卜', '樱桃', '黄瓜', '西瓜']
+    names = ["苹果", "哈密瓜", "樱桃", "葡萄", "梨", "西瓜"]
     # 打印和返回预测结果
     r = '{"label":%d, "name":"%s", "possibility":%f}' % (lab, names[lab], result[lab])
     print(r)
