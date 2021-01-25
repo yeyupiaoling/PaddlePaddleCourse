@@ -7,6 +7,12 @@ import paddle.fluid as fluid
 import create_data
 import text_reader
 import bilstm_net
+try:
+    # 兼容PaddlePaddle2.0
+    paddle.enable_static()
+except:
+    pass
+
 
 # 定义输入数据， lod_level不为0指定输入数据为序列数据
 words = fluid.data(name='words', shape=[None, 1], dtype='int64', lod_level=1)

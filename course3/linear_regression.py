@@ -1,5 +1,11 @@
 import paddle.fluid as fluid
 import numpy as np
+import paddle
+try:
+    # 兼容PaddlePaddle2.0
+    paddle.enable_static()
+except:
+    pass
 
 # 定义一个简单的线性网络
 x = fluid.data(name='x', shape=[None, 1], dtype='float32')

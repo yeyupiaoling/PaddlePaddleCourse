@@ -1,10 +1,16 @@
 import os
 import shutil
 import vgg16
-import paddle as paddle
+import paddle
 import paddle.dataset.cifar as cifar
 import paddle.fluid as fluid
 from visualdl import LogWriter
+try:
+    # 兼容PaddlePaddle2.0
+    paddle.enable_static()
+except:
+    pass
+
 
 # 创建记录器
 writer = LogWriter(logdir='log/')

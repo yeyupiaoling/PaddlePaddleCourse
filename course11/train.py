@@ -1,10 +1,15 @@
 import os
 import shutil
 import mobilenet_v1
-import numpy
-import paddle as paddle
+import paddle
 import reader
 import paddle.fluid as fluid
+try:
+    # 兼容PaddlePaddle2.0
+    paddle.enable_static()
+except:
+    pass
+
 
 crop_size = 224
 resize_size = 250

@@ -1,4 +1,10 @@
 import paddle.fluid as fluid
+import paddle
+try:
+    # 兼容PaddlePaddle2.0
+    paddle.enable_static()
+except:
+    pass
 
 # 定义两个张量
 x1 = fluid.layers.fill_constant(shape=[2, 2], value=1, dtype='int64')

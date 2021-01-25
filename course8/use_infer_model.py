@@ -1,6 +1,13 @@
 import paddle.fluid as fluid
 from PIL import Image
 import numpy as np
+import paddle
+try:
+    # 兼容PaddlePaddle2.0
+    paddle.enable_static()
+except:
+    pass
+
 
 # 创建执行器
 place = fluid.CPUPlace()

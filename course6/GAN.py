@@ -1,9 +1,13 @@
 import os
-
 import matplotlib.pyplot as plt
 import numpy as np
 import paddle
 import paddle.fluid as fluid
+try:
+    # 兼容PaddlePaddle2.0
+    paddle.enable_static()
+except:
+    pass
 
 
 # 定义生成器

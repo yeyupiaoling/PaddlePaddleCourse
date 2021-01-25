@@ -4,6 +4,12 @@ import random
 import gym
 from collections import deque
 from paddle.fluid.param_attr import ParamAttr
+import paddle
+try:
+    # 兼容PaddlePaddle2.0
+    paddle.enable_static()
+except:
+    pass
 
 
 # 定义一个深度神经网络，通过指定参数名称，用于之后更新指定的网络参数

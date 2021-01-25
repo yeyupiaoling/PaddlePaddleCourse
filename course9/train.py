@@ -1,10 +1,14 @@
 import os
 import shutil
-import paddle as paddle
+import paddle
 import paddle.dataset.flowers as flowers
 import paddle.fluid as fluid
 from paddle.fluid.param_attr import ParamAttr
-
+try:
+    # 兼容PaddlePaddle2.0
+    paddle.enable_static()
+except:
+    pass
 
 # 定义残差神经网络（ResNet）
 def resnet50(input):

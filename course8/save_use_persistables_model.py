@@ -1,9 +1,13 @@
 import os
 import shutil
-
-import paddle as paddle
+import paddle
 import paddle.dataset.cifar as cifar
 import paddle.fluid as fluid
+try:
+    # 兼容PaddlePaddle2.0
+    paddle.enable_static()
+except:
+    pass
 
 
 # 定义VGG16神经网络

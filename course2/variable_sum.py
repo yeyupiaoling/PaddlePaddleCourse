@@ -1,5 +1,11 @@
 import paddle.fluid as fluid
 import numpy as np
+import paddle
+try:
+    # 兼容PaddlePaddle2.0
+    paddle.enable_static()
+except:
+    pass
 
 # 定义两个张量
 a = fluid.layers.create_tensor(dtype='int64', name='a')

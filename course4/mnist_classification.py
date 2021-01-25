@@ -3,6 +3,11 @@ import paddle as paddle
 import paddle.dataset.mnist as mnist
 import paddle.fluid as fluid
 from PIL import Image
+try:
+    # 兼容PaddlePaddle2.0
+    paddle.enable_static()
+except:
+    pass
 
 
 # 卷积神经网络

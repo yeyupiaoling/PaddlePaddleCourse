@@ -2,6 +2,11 @@ import paddle.fluid as fluid
 import paddle
 import paddle.dataset.uci_housing as uci_housing
 import numpy
+try:
+    # 兼容PaddlePaddle2.0
+    paddle.enable_static()
+except:
+    pass
 
 # 定义一个简单的线性网络
 x = fluid.data(name='x', shape=[None, 13], dtype='float32')

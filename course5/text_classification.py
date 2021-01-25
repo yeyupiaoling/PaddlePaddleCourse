@@ -2,6 +2,11 @@ import paddle
 import paddle.dataset.imdb as imdb
 import paddle.fluid as fluid
 import numpy as np
+try:
+    # 兼容PaddlePaddle2.0
+    paddle.enable_static()
+except:
+    pass
 
 
 def rnn_net(ipt, input_dim):
