@@ -8,8 +8,7 @@ course10/random_log
 course11/images
 course11/models
 course12/infer_model
-course12/datasets/*
-!course12/datasets/news_classify_data.txt
+course12/datasets
 course13/models
 course14/models
 course14/images

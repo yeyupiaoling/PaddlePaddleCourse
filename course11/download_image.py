@@ -17,9 +17,8 @@ def download_image(key_word, save_name, download_max):
     while download_sum < download_max:
         download_sum += 1
         str_pn = str(download_sum)
-        # 定义百度图片的路径
-        url = 'http://image.baidu.com/search/flip?tn=baiduimage&ie=utf-8&' \
-              'word=' + key_word + '&pn=' + str_pn + '&gsm=80&ct=&ic=0&lm=-1&width=0&height=0'
+        # 要爬取的URL
+        url = ""
         try:
             s = requests.session()
             s.headers['User-Agent'] = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'
