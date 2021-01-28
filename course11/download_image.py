@@ -18,7 +18,9 @@ def download_image(key_word, save_name, download_max):
         download_sum += 1
         str_pn = str(download_sum)
         # 要爬取的URL
-        url = ""
+        url = '' \
+              '/search/flip?tn=baiduimage&ie=utf-8&' \
+              'word=' + key_word + '&pn=' + str_pn + '&gsm=80&ct=&ic=0&lm=-1&width=0&height=0'
         try:
             s = requests.session()
             s.headers['User-Agent'] = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36'

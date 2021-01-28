@@ -34,7 +34,8 @@ def get_data(tup, data_path):
     global downloaded_sum
     print('============%s============' % tup[1])
     # 要爬取的URL
-    url = ""
+    url = "" \
+          "/api/news/feed/v63/"
     # 分类新闻的访问参数，模仿正常网络访问
     t = int(time.time() - 600000 / 10000)
     t = random.randint(6 * t, 10 * t)
